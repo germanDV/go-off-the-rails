@@ -228,6 +228,8 @@ func validate(title string, rating int) error {
 
 `gotr` provides a basic UI which includes a sidebar with auth-related actions and pages for CRUD operations on wahtever new things you generate.
 
+GOTR uses [HTMX](https://htmx.org/) to enhance requests to the backend. Among other things, this allows forms to use HTTP verbs like `PUT` and `DELETE` instead of relying solely on `POST`. Data is still communicated to the backend as form values — not JSON.
+
 ```go
 templ Layout(title string, ctx context.Context) {
     <!DOCTYPE html>
@@ -237,6 +239,7 @@ templ Layout(title string, ctx context.Context) {
             <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
             <title>{ title }</title>
             <link rel="stylesheet" href="/static/styles.css"/>
+            <script src="https://unpkg.com/htmx.org@2" defer></script>
         </head>
         <body>
             @maybeSidebar(ctx)
@@ -265,15 +268,15 @@ templ sidebar(user domain.User) {
 
 ## Routes And Views
 
-| Mth  | Route               | View                 | Description                  |
-|------|---------------------|----------------------|------------------------------|
-| GET  | /movies             | movies_index.templ   | List all movies              |
-| GET  | /movies/new         | movies_new.templ     | Show create form             |
-| POST | /movies Handle      | n/a                  | Create movie form submission |
-| GET  | /movies/{id}        | movies_show.templ    | Show movie details           |
-| GET  | /movies/{id}/edit   | movies_edit.templ    | Show edit form               |
-| POST | /movies/{id}        | n/a                  | Handle edit form submission  |
-| POST | /movies/{id}/delete | n/a                  | Delete movie                 |
+| Mth    | Route             | View                 | Description                  |
+|--------|-------------------|----------------------|------------------------------|
+| GET    | /movies           | movies_index.templ   | List all movies              |
+| GET    | /movies/new       | movies_new.templ     | Show create form             |
+| POST   | /movies           | n/a                  | Create movie form submission |
+| GET    | /movies/{id}      | movies_show.templ    | Show movie details           |
+| GET    | /movies/{id}/edit | movies_edit.templ    | Show edit form               |
+| PUT    | /movies/{id}      | n/a                  | Handle edit form submission  |
+| DELETE | /movies/{id}      | n/a                  | Delete movie                 |
 
 ## Optimistic Concurrency
 
