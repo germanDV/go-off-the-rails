@@ -289,5 +289,5 @@ The last read version is passed to the update query. If the update does not affe
 - Start a new project with `gotr new <project-name>`.
 - Run the development server with `gotr dev`. It uses `air` for hot reloading.
 - Scaffold a new resource with full CRUD functionality with `gotr generate scaffold <resource-name> <field-name>:<type> [<field-name>:<type> ...]`.
-- Run DB migrations with `gotr db migrate`. It uses `goose`.
+- Run DB migrations with `gotr db migrate`.
 
