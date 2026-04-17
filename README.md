@@ -2,6 +2,10 @@
 
 A web framework for Go. Heavily inspired by Ruby on Rails.
 
+It is heavily opinionated and adapted to particular needs.
+You are probably better of using Ruby on Rails, Phoenix or Loco.rs instead.
+But if the opinions fit your needs as well, welcome!
+
 ## Auth
 
 It scaffolds a multi-tenant system with basic RBAC (`ADMIN` and `USER` roles).
@@ -45,12 +49,13 @@ gotr generate scaffold movies title:string! rating:int
 
 Produces:
 ```
-db/migrations/20240114120000_create_movies.sql
-db/queries/app/movies.sql
+db/migrations/002_create_movies.up.sql
+db/migrations/002_create_movies.down.sql
+db/queries/movies_queries.sql
 ```
 
 ```sql
--- db/migrations/20240114120000_create_movies.sql
+-- db/migrations/002_create_movies.up.sql
 CREATE TABLE movies (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -63,7 +68,7 @@ CREATE TABLE movies (
 ```
 
 ```sql
--- db/queries/app/movies.sql
+-- db/queries/movies_queries.sql
 
 -- name: GetMovie :one
 SELECT * FROM movies WHERE id = ? AND org_id = ?;
@@ -94,7 +99,7 @@ app/
   domain/
     movie.go
   controllers/
-    movies.go
+    movies_controller.go
   views/
     layout.templ
     sidebar.templ
@@ -103,22 +108,27 @@ app/
     movies_show.templ     // views.MoviesShow
     movies_new.templ      // views.MoviesNew
     movies_edit.templ     // views.MoviesEdit
-    users_index.templ     // views.Use
   db/
     queries/
-      movies.sql
+      movies_queries.sql
+    migrations/
+      001_movies_migration.up.sql
+      001_movies_migration.down.sql
     generated/
-      movies.sql.go  // sqlc output, pure DB accessrsIndex
+      movies.sql.go  // sqlc output
+    orgs_repository.go
+    movies_repository.go
 ```
 
 
+- `controllers` package is an orchestration layer, it depends on the `db` repositories to read and write entities, it delegates all business logic to the domain entities
 - `db` package owns all data access and mapping from sqlc structs to domain entities
 - `domain` package defines the entities and owns all the business logic as well as validation rules
-- `controllers` package is an orchestration layer, it depends on the `db` repositories to read and write entities, it delegates all business logic to the domain entities
+- `views` package is a templating layer that is in charge of rendering the domain, it uses `Templ` templates
 
 
 ```go
-// domain/movies.go
+// domain/movie.go
 type Movie struct {
     ID     uuid.UUID
     OrgID  uuid.UUID
@@ -160,22 +170,26 @@ Listing endpoints are paginated by default. The `limit` and `offset` query param
 
 ```go
 // domain/pagination.go
-type PageParams struct {
+type PaginationParams struct {
     Limit  int
     Offset int
 }
 
-func PageParamsFromRequest(r *http.Request) PageParams {
-    limit  := celing(parseIntOr(r.URL.Query().Get("limit"), 100), 999)
-    offset := parseIntOr(r.URL.Query().Get("offset"), 0)
-    return PageParams{Limit: limit, Offset: offset}
+func NewPaginationParams(limit string, offset string) PaginationParams {
+	return PaginationParams{
+		limit:  cap(parseIntOr(limit, DefaultLimit), MaxLimit),
+		offset: parseIntOr(offset, DefaultOffset),
+	}
 }
-
 
 // controllers/movies.go
 func (c *MoviesController) Index(w http.ResponseWriter, r *http.Request) {
-    page := domain.PageParamsFromRequest(r)
-    movies, err := c.movies.List(r.Context(), page)
+    page := domain.NewPaginationParams(
+        r.URL.Query().Get("limit"),
+        r.URL.Query().Get("offset"),
+    )
+
+    movies, err := c.moviesRepo.List(r.Context(), page)
     ...
 }
 ```
