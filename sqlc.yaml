@@ -1,0 +1,17 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    queries: "db/queries"
+    schema: "db/migrations"
+    gen:
+      go:
+        emit_interface: true
+        emit_empty_slices: true
+        omit_unused_structs: true
+        package: "generated"
+        out: "db/generated"
+        sql_package: "???"
+        overrides:
+          - db_type: "timestamptz"
+            go_type: "time.Time"
+

@@ -1,3 +1,0 @@
-DROP TABLE IF EXISTS orgs;
-DROP TABLE IF EXISTS users;
-DROP INDEX IF EXISTS users_email_idx;

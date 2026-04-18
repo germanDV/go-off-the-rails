@@ -4,14 +4,13 @@ package generated
 
 import (
 	"context"
+	"errors"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type MovieRow struct {
-	ID        uuid.UUID
-	OrgID     uuid.UUID
+	ID        string
+	OrgID     string
 	Title     string
 	Rating    int
 	Version   int
@@ -20,16 +19,40 @@ type MovieRow struct {
 }
 
 type Querier interface {
-	GetMovie(ctx context.Context, id string) (MovieRow, error)
+	GetMovie(ctx context.Context, orgID string, movieID string) (MovieRow, error)
 	ListMovies(ctx context.Context, orgID string, limit int, offset int) ([]MovieRow, error)
+	CreateMovie(ctx context.Context, movie MovieRow) error
 }
 
-type MockQuerier struct{}
-
-func (MockQuerier) GetMovie(ctx context.Context, id string) (MovieRow, error) {
-	return MovieRow{}, nil
+type MockQuerier struct {
+	storage map[string]MovieRow
 }
 
-func (MockQuerier) ListMovies(ctx context.Context, orgID string, limit int, offset int) ([]MovieRow, error) {
-	return []MovieRow{}, nil
+func (m *MockQuerier) CreateMovie(ctx context.Context, movie MovieRow) error {
+	if m.storage == nil {
+		m.storage = make(map[string]MovieRow)
+	}
+	m.storage[movie.ID] = movie
+	return nil
+}
+
+func (m *MockQuerier) ListMovies(ctx context.Context, orgID string, limit int, offset int) ([]MovieRow, error) {
+	var rows []MovieRow
+	for _, row := range m.storage {
+		if row.OrgID == orgID {
+			rows = append(rows, row)
+		}
+	}
+	return rows, nil
+}
+
+func (m *MockQuerier) GetMovie(ctx context.Context, orgID string, id string) (MovieRow, error) {
+	row, ok := m.storage[id]
+	if !ok {
+		return MovieRow{}, errors.New("not found")
+	}
+	if row.OrgID != orgID {
+		return MovieRow{}, errors.New("forbidden")
+	}
+	return row, nil
 }

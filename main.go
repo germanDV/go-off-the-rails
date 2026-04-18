@@ -22,7 +22,7 @@ const (
 )
 
 func main() {
-	moviesRepo := db.NewMoviesRepository(generated.MockQuerier{})
+	moviesRepo := db.NewMoviesRepository(&generated.MockQuerier{})
 	moviesController := controllers.NewMoviesController(moviesRepo)
 
 	mux := &http.ServeMux{}

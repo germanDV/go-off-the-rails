@@ -20,6 +20,7 @@ func NewMoviesController(moviesRepo *db.MoviesRepository) *MoviesController {
 func (c *MoviesController) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /movies", c.Index)
 	mux.HandleFunc("GET /movies/{movie_id}", c.Show)
+	mux.HandleFunc("POST /movies", c.Create)
 }
 
 func (c *MoviesController) Index(w http.ResponseWriter, r *http.Request) {
@@ -41,8 +42,7 @@ func (c *MoviesController) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *MoviesController) Show(w http.ResponseWriter, r *http.Request) {
-	movieIDStr := r.PathValue("movie_id")
-	movieID, err := uuid.Parse(movieIDStr)
+	movieID, err := uuid.Parse(r.PathValue("movie_id"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -51,17 +51,34 @@ func (c *MoviesController) Show(w http.ResponseWriter, r *http.Request) {
 	// TODO: get form user in r.Context()
 	orgID := uuid.Must(uuid.NewV7())
 
-	movie, err := c.moviesRepo.GetByID(r.Context(), movieID)
+	movie, err := c.moviesRepo.GetByID(r.Context(), orgID, movieID)
 	if err != nil {
 		// TODO: handle not found
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if movie.OrgID != orgID {
-		http.Error(w, "not found", http.StatusNotFound)
+	w.Write([]byte(fmt.Sprintf("We found movie %s in your collection", movie.Title)))
+}
+
+func (c *MoviesController) Create(w http.ResponseWriter, r *http.Request) {
+	// TODO: get form user in r.Context()
+	orgID := uuid.Must(uuid.NewV7())
+
+	title := r.FormValue("title")
+	rating := r.FormValue("rating")
+
+	movie, err := domain.NewMovie(orgID, title, rating)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	w.Write([]byte(fmt.Sprintf("We found movie %s in your collection", movie.Title)))
+	err = c.moviesRepo.Create(r.Context(), movie)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte(fmt.Sprintf("We created movie %s in your collection", movie.ID)))
 }

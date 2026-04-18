@@ -49,13 +49,12 @@ gotr generate scaffold movies title:string! rating:int
 
 Produces:
 ```
-db/migrations/002_create_movies.up.sql
-db/migrations/002_create_movies.down.sql
+db/migrations/002_create_movies.sql
 db/queries/movies_queries.sql
 ```
 
 ```sql
--- db/migrations/002_create_movies.up.sql
+-- db/migrations/002_create_movies.sql
 CREATE TABLE movies (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -112,8 +111,7 @@ app/
     queries/
       movies_queries.sql
     migrations/
-      001_movies_migration.up.sql
-      001_movies_migration.down.sql
+      001_movies_migration.sql
     generated/
       movies.sql.go  // sqlc output
     orgs_repository.go
@@ -162,6 +160,36 @@ type MoviesController struct {
 }
 ```
 
+## Domain Services
+
+When business logic grows beyond what a single entity can encapsulate — for example, computing a result that involves multiple entities — a **domain service** can be introduced in the `domain` package.
+
+Domain services are kept **pure**: they receive entities, perform in-memory transformations or computations, and return the results. They have no dependencies on repositories, databases, or any infrastructure.
+
+The **controller acts as a workflow script**: it reads entities from repositories, passes them to the domain service, and then takes care of persistence and any other side effects (notifications, logging, etc.).
+
+```go
+// domain/movie_pricing.go — pure domain service, no dependencies
+func ApplySeasonalDiscount(movie Movie, season string) (Movie, float64) {
+    discount := 0.0
+    if movie.Rating >= 8 && season == "summer" {
+        discount = 0.15
+    }
+    return movie, discount
+}
+
+// controllers/movies_controller.go — orchestrates the workflow
+func (c *MoviesController) ApplyDiscount(w http.ResponseWriter, r *http.Request) {
+    movie, err := c.moviesRepo.GetByID(r.Context(), orgID, movieID)
+    // ...
+    updated, discount := domain.ApplySeasonalDiscount(movie, "summer")
+    err = c.moviesRepo.Update(r.Context(), updated)
+    // ... send notification, render response, etc.
+}
+```
+
+This keeps domain logic easy to test (no mocks needed) while avoiding unnecessary layers of abstraction. If a workflow later needs to be reused from multiple entry points (HTTP, CLI, background jobs), it can be promoted into a service that accepts repository interfaces — but that step is deferred until actually needed.
+
 ## Controllers
 
 ### Pagination
@@ -200,31 +228,50 @@ func (c *MoviesController) Index(w http.ResponseWriter, r *http.Request) {
 
 ```go
 // domain/movies.go
-func NewMovie(title string, rating int) (Movie, error) {
-   if err := validate(title, rating); err != nil {
-        return Movie{}, err
-    }
-    return Movie{
-        ID:     uuid.New(),
-        Title:  title,
-        Rating: rating,
-        CreatedAt: time.Now(),
-        UpdatedAt: time.Now(),
-    }, nil
+func NewMovie(orgID uuid.UUID, titleInput string, ratingInput string) (Movie, error) {
+	title := strings.TrimSpace(titleInput)
+
+	rating, err := strconv.Atoi(strings.TrimSpace(ratingInput))
+	if err != nil {
+		return Movie{}, err
+	}
+
+	err = validate(title, rating)
+	if err != nil {
+		return Movie{}, err
+	}
+
+	return Movie{
+		ID:        uuid.Must(uuid.NewV7()),
+		OrgID:     orgID,
+		Title:     title,
+		Rating:    rating,
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	}, nil
 }
 
-func (m *Movie) Update(title string, rating int) error {
+func (m *Movie) Update(title string, rating string) error {
    if err := validate(title, rating); err != nil {
         return Movie{}, err
     }
+
     m.Title = title
     m.Rating = rating
-    m.UpdatedAt = time.Now()
+    m.UpdatedAt = time.Now().UTC()
+
     return nil
 }
 
 func validate(title string, rating int) error {
-    // Implement your validation rules here!
+	if utf8.RuneCountInString(title) < 3 || utf8.RuneCountInString(title) > 100 {
+		return errors.New("title must be between 3 and 100 characters")
+	}
+
+	if rating < 1 || rating > 10 {
+		return errors.New("rating must be between 1 and 10")
+	}
+
     return nil
 }
 ```
