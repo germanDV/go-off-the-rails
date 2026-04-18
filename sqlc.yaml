@@ -10,7 +10,6 @@ sql:
         omit_unused_structs: true
         package: "generated"
         out: "db/generated"
-        sql_package: "???"
         overrides:
           - db_type: "timestamptz"
             go_type: "time.Time"

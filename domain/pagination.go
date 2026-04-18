@@ -11,8 +11,8 @@ const (
 )
 
 type PaginationParams struct {
-	limit  int
-	offset int
+	limit  int64
+	offset int64
 }
 
 func NewPaginationParams(limit string, offset string) PaginationParams {
@@ -22,22 +22,22 @@ func NewPaginationParams(limit string, offset string) PaginationParams {
 	}
 }
 
-func (p PaginationParams) Limit() int {
+func (p PaginationParams) Limit() int64 {
 	return p.limit
 }
 
-func (p PaginationParams) Offset() int {
+func (p PaginationParams) Offset() int64 {
 	return p.offset
 }
 
-func cap(i int, max int) int {
+func cap(i int64, max int64) int64 {
 	if i > max {
 		return max
 	}
 	return i
 }
 
-func parseIntOr(s string, defaultValue int) int {
+func parseIntOr(s string, defaultValue int64) int64 {
 	if s == "" {
 		return defaultValue
 	}
@@ -47,5 +47,5 @@ func parseIntOr(s string, defaultValue int) int {
 		return defaultValue
 	}
 
-	return i
+	return int64(i)
 }

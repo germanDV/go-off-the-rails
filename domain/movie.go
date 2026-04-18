@@ -14,8 +14,8 @@ type Movie struct {
 	ID        uuid.UUID
 	OrgID     uuid.UUID
 	Title     string
-	Rating    int
-	Version   int
+	Rating    int64
+	Version   int64
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -37,7 +37,7 @@ func NewMovie(orgID uuid.UUID, titleInput string, ratingInput string) (Movie, er
 		ID:        uuid.Must(uuid.NewV7()),
 		OrgID:     orgID,
 		Title:     title,
-		Rating:    rating,
+		Rating:    int64(rating),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	}, nil
@@ -57,7 +57,7 @@ func (m *Movie) Update(titleInput string, ratingInput string) error {
 	}
 
 	m.Title = title
-	m.Rating = rating
+	m.Rating = int64(rating)
 	m.UpdatedAt = time.Now().UTC()
 
 	return nil
