@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS verification_tokens (
+  token TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

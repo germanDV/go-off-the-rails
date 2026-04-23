@@ -28,7 +28,7 @@ func NewMovie(orgID uuid.UUID, titleInput string, ratingInput string) (Movie, er
 		return Movie{}, err
 	}
 
-	err = validate(title, rating)
+	err = validateMovie(title, rating)
 	if err != nil {
 		return Movie{}, err
 	}
@@ -51,7 +51,7 @@ func (m *Movie) Update(titleInput string, ratingInput string) error {
 		return err
 	}
 
-	err = validate(title, rating)
+	err = validateMovie(title, rating)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (m *Movie) Update(titleInput string, ratingInput string) error {
 	return nil
 }
 
-func validate(title string, rating int) error {
+func validateMovie(title string, rating int) error {
 	if utf8.RuneCountInString(title) < 3 || utf8.RuneCountInString(title) > 100 {
 		return errors.New("title must be between 3 and 100 characters")
 	}

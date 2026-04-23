@@ -18,3 +18,20 @@ type Movie struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+type User struct {
+	ID           string
+	OrgID        string
+	Email        string
+	PasswordHash string
+	Role         string
+	Verified     bool
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+type VerificationToken struct {
+	Token     string
+	UserID    string
+	CreatedAt time.Time
+}

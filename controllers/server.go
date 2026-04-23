@@ -31,6 +31,7 @@ type Server struct {
 	mdw        *MiddlewareChain
 	httpServer *http.Server
 	mux        *http.ServeMux
+	tokenizer  *domain.Tokenizer
 }
 
 func NewServer(cfg ServerConfig) *Server {
@@ -53,6 +54,7 @@ func NewServer(cfg ServerConfig) *Server {
 		mdw:        mdw,
 		mux:        mux,
 		httpServer: httpServer,
+		tokenizer:  cfg.Tokenizer,
 	}
 
 	s.routes()
@@ -62,6 +64,11 @@ func NewServer(cfg ServerConfig) *Server {
 func (s *Server) routes() {
 	healthController := NewHealthController(s.mdw)
 	healthController.RegisterRoutes(s.mux)
+
+	usersRepo := db.NewUsersRepository(generated.New(s.dbClient))
+	orgsRepo := db.NewOrgsRepository(generated.New(s.dbClient))
+	authController := NewAuthController(s.mdw, s.dbClient, usersRepo, orgsRepo, s.tokenizer)
+	authController.RegisterRoutes(s.mux)
 
 	moviesRepo := db.NewMoviesRepository(generated.New(s.dbClient))
 	moviesController := NewMoviesController(s.mdw, moviesRepo)

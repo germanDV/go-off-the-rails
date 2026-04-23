@@ -47,7 +47,7 @@ func (r *MoviesRepository) GetByID(
 		return domain.Movie{}, err
 	}
 
-	return parseRow(row)
+	return parseMovieRow(row)
 }
 
 func (r *MoviesRepository) List(
@@ -66,10 +66,10 @@ func (r *MoviesRepository) List(
 		return nil, err
 	}
 
-	return mapRows(rows, parseRow)
+	return mapRows(rows, parseMovieRow)
 }
 
-func parseRow(row generated.Movie) (domain.Movie, error) {
+func parseMovieRow(row generated.Movie) (domain.Movie, error) {
 	movieID, err := uuid.Parse(row.ID)
 	if err != nil {
 		return domain.Movie{}, err

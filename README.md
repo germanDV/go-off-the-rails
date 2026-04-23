@@ -321,7 +321,7 @@ templ maybeSidebar(ctx context.Context) {
 templ sidebar(user domain.User) {
     <nav>
         <span>{ user.Email }</span>
-        <form action="/auth/signout" method="POST">
+        <form action="/signout" method="POST">
             <button type="submit">Sign out</button>
         </form>
     </nav>
