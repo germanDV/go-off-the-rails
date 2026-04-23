@@ -10,17 +10,21 @@ import (
 )
 
 type MoviesController struct {
+	mdw        *MiddlewareChain
 	moviesRepo *db.MoviesRepository
 }
 
-func NewMoviesController(moviesRepo *db.MoviesRepository) *MoviesController {
-	return &MoviesController{moviesRepo: moviesRepo}
+func NewMoviesController(mdw *MiddlewareChain, moviesRepo *db.MoviesRepository) *MoviesController {
+	return &MoviesController{
+		mdw:        mdw,
+		moviesRepo: moviesRepo,
+	}
 }
 
 func (c *MoviesController) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /movies", c.Index)
-	mux.HandleFunc("GET /movies/{movie_id}", c.Show)
-	mux.HandleFunc("POST /movies", c.Create)
+	mux.Handle("GET /movies", c.mdw.RBACUser(c.Index))
+	mux.Handle("GET /movies/{movie_id}", c.mdw.RBACUser(c.Show))
+	mux.Handle("POST /movies", c.mdw.RBACUser(c.Create))
 }
 
 func (c *MoviesController) Index(w http.ResponseWriter, r *http.Request) {

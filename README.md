@@ -31,6 +31,7 @@ users:  id, email, password_hash, role, org_id, created_at, updated_at
   "sub": "user_id",
   "org_id": "org_id",
   "role": "ADMIN",
+  "email": "user@example.com",
    ...
 }
 ```

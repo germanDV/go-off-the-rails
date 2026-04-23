@@ -2,27 +2,18 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
-	"net/http"
-	"time"
 
 	_ "modernc.org/sqlite"
 
 	"github.com/germandv/go-off-the-rails/controllers"
-	"github.com/germandv/go-off-the-rails/db"
-	"github.com/germandv/go-off-the-rails/db/generated"
+	"github.com/germandv/go-off-the-rails/domain"
 )
 
 const (
-	HttpPort              = 8787
-	HttpIdleTimeout       = 1 * time.Minute
-	HttpReadHeaderTimeout = 5 * time.Second
-	HttpReadTimeout       = 10 * time.Second
-	HttpWriteTimeout      = 15 * time.Second
-	HttpTimeout           = 14 * time.Second
-	DbPath                = "./db.sqlite"
+	HttpPort = 8787
+	DbPath   = "./db.sqlite"
 )
 
 func main() {
@@ -34,27 +25,21 @@ func main() {
 	// TODO: run db migrations
 	tempMigrationRun(dbClient)
 
-	moviesRepo := db.NewMoviesRepository(generated.New(dbClient))
-	moviesController := controllers.NewMoviesController(moviesRepo)
-
-	mux := &http.ServeMux{}
-	moviesController.RegisterRoutes(mux)
-
-	port := HttpPort
-	httpServer := &http.Server{
-		Addr:              fmt.Sprintf(":%d", port),
-		Handler:           mux,
-		IdleTimeout:       HttpIdleTimeout,
-		ReadHeaderTimeout: HttpReadHeaderTimeout,
-		ReadTimeout:       HttpReadTimeout,
-		WriteTimeout:      HttpWriteTimeout,
+	// TODO: read keys from env
+	tokenizer, err := domain.NewTokenizer(tempGetPrivateKey(), tempGetPublicKey())
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	httpServer.Handler = http.TimeoutHandler(mux, HttpTimeout, "Request timed out")
+	server := controllers.NewServer(controllers.ServerConfig{
+		Port:      HttpPort,
+		DBClient:  dbClient,
+		Tokenizer: tokenizer,
+	})
 
-	fmt.Printf("Listening on port %d\n", port)
-	err = httpServer.ListenAndServe()
-	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+	fmt.Printf("Listening on port %d\n", HttpPort)
+	err = server.Start()
+	if err != nil {
 		log.Fatal(err)
 	}
 }
