@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS invites (
+  id TEXT PRIMARY KEY,
+  org_id TEXT NOT NULL REFERENCES orgs(id),
+  email TEXT NOT NULL,
+  token TEXT NOT NULL UNIQUE,
+  created_at DATETIME NOT NULL,
+  expires_at DATETIME NOT NULL
+);

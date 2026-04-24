@@ -9,12 +9,15 @@ import (
 )
 
 type Querier interface {
+	CreateInvite(ctx context.Context, arg CreateInviteParams) error
 	CreateMovie(ctx context.Context, arg CreateMovieParams) error
 	CreateOrg(ctx context.Context, arg CreateOrgParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateVerificationToken(ctx context.Context, arg CreateVerificationTokenParams) error
+	DeleteInvite(ctx context.Context, token string) error
 	DeleteMovie(ctx context.Context, arg DeleteMovieParams) error
 	DeleteVerificationToken(ctx context.Context, token string) error
+	GetInviteByToken(ctx context.Context, token string) (Invite, error)
 	GetMovie(ctx context.Context, arg GetMovieParams) (Movie, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetVerificationToken(ctx context.Context, token string) (VerificationToken, error)

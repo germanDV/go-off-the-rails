@@ -67,7 +67,8 @@ func (s *Server) routes() {
 
 	usersRepo := db.NewUsersRepository(generated.New(s.dbClient))
 	orgsRepo := db.NewOrgsRepository(generated.New(s.dbClient))
-	authController := NewAuthController(s.mdw, s.dbClient, usersRepo, orgsRepo, s.tokenizer)
+	invitesRepo := db.NewInvitesRepository(generated.New(s.dbClient))
+	authController := NewAuthController(s.mdw, s.dbClient, usersRepo, orgsRepo, invitesRepo, s.tokenizer)
 	authController.RegisterRoutes(s.mux)
 
 	moviesRepo := db.NewMoviesRepository(generated.New(s.dbClient))

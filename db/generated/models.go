@@ -9,6 +9,15 @@ import (
 	"time"
 )
 
+type Invite struct {
+	ID        string
+	OrgID     string
+	Email     string
+	Token     string
+	CreatedAt time.Time
+	ExpiresAt time.Time
+}
+
 type Movie struct {
 	ID        string
 	OrgID     string
