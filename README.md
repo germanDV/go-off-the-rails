@@ -353,3 +353,50 @@ The last read version is passed to the update query. If the update does not affe
 - Scaffold a new resource with full CRUD functionality with `gotr generate scaffold <resource-name> <field-name>:<type> [<field-name>:<type> ...]`.
 - Run DB migrations with `gotr db migrate`.
 
+## Development Workflow (with Pi)
+
+This project uses a three-phase workflow when working with the Pi coding agent:
+
+### Phase 1: Discuss (`/think`)
+
+Enter read-only exploration mode to think through problems before writing code.
+
+- Use `/think [topic]` to start a discussion
+- Pi explores the codebase using only read, bash, grep, find, ls tools
+- Ask clarifying questions, evaluate trade-offs
+- Do NOT modify files during this phase
+
+### Phase 2: Spec (`/spec`)
+
+Formalize the agreed approach into a detailed implementation plan.
+
+- Use `/spec feature-name` to write `specs/{feature-name}.md`
+- Follow the template in `specs/_template.md`
+- Include: DB schema, sqlc queries, domain model, repository, controller endpoints, views, routes, middleware
+- Number all implementation steps — this is the contract
+
+### Phase 3: Build (`/build`)
+
+Implement the spec step by step.
+
+- Use `/build feature-name` to implement from `specs/{feature-name}.md`
+- Mark completed steps with `[DONE:n]` markers
+- If the spec needs changing during implementation, update the spec first
+- Run `sqlc generate` after query changes, `go build ./...` after Go changes
+
+### Verification (`/verify`)
+
+After implementation, audit completeness:
+
+- Use `/verify feature-name` to cross-check code against the spec
+- Report any gaps or mismatches
+
+### Workflow Summary
+
+```
+/think "How should we implement X?"   → discuss, explore
+/spec x                                → writes specs/x.md
+/build x                               → implements specs/x.md
+/verify x                              → audits completeness
+```
+
